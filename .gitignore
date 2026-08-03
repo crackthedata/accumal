@@ -221,3 +221,4 @@ __marimo__/
 *.sqlite3
 *-credentials.json
 service-account-credentials.json
+client_secret.json
