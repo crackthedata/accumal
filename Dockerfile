@@ -14,7 +14,7 @@ COPY . .
 
 # Setup cron job
 # 1. Init DB, 2. Fetch GSC, 3. Fetch Competitors, 4. Fetch Authority, 5. Export Reports
-RUN echo "0 2 * * * root cd /app && python db.py && python gsc_fetcher.py && python competitor_analyzer.py && python authority_fetcher.py && python export_reports.py > /proc/1/fd/1 2>/proc/1/fd/2" > /etc/cron.d/seo_cron
+RUN echo "0 2 * * * root cd /app && python src/db.py && python src/gsc_fetcher.py && python src/competitor_analyzer.py && python src/authority_fetcher.py && python src/export_reports.py > /proc/1/fd/1 2>/proc/1/fd/2" > /etc/cron.d/seo_cron
 
 # Give execution rights on the cron job
 RUN chmod 0644 /etc/cron.d/seo_cron

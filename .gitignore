@@ -220,3 +220,4 @@ __marimo__/
 # SEO Database files
 *.sqlite3
 *-credentials.json
+service-account-credentials.json

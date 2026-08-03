@@ -6,15 +6,17 @@ This project builds an automated, local SEO ranking database. It pulls your rank
 
 1. Python 3.7+
 2. **Google Search Console API Access**: 
-   - In Google Cloud Platform (GCP), enable the "Google Search Console API" and create a Service Account (no special IAM roles required in GCP). Download its JSON key file.
-   - In Google Search Console, go to **Settings > Users and permissions**, and add the Service Account's email address as a "Restricted" or "Full" user.
+   - In Google Cloud Platform (GCP), enable the "Google Search Console API".
+   - Go to **APIs & Services > Credentials** and configure the OAuth consent screen.
+   - Create an **OAuth 2.0 Client ID** (select "Desktop app" as the application type).
+   - Download the JSON file and save it locally (e.g., as `client_secret.json`).
 3. A free API key from [Serper.dev](https://serper.dev/).
 4. A free API key from [Open PageRank](https://www.domcop.com/openpagerank/what-is-openpagerank).
 
 ## Setup Instructions
 
 1. **Environment Variables**: Copy `.env.example` to `.env` and fill in the values:
-   - `GSC_CREDENTIALS_FILE`: Path to your downloaded Google Service Account JSON key (e.g., `service-account-credentials.json`).
+   - `GSC_CLIENT_SECRET_FILE`: Path to your downloaded OAuth 2.0 Client ID JSON file (e.g., `client_secret.json`).
    - `GSC_PROPERTY_URL`: Your exact website URL as registered in GSC (e.g., `https://example.com/` or `sc-domain:example.com`).
    - `SERPER_API_KEY`: Your Serper API key.
    - `OPEN_PAGERANK_API_KEY`: Your Open PageRank API key.

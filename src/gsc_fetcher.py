@@ -1,6 +1,8 @@
 import os
 import datetime
-from google.oauth2 import service_account
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import sqlite3
@@ -9,20 +11,38 @@ from db import get_connection
 load_dotenv()
 
 # Configuration
-GSC_CREDENTIALS_FILE = os.getenv('GSC_CREDENTIALS_FILE')
+GSC_CLIENT_SECRET_FILE = os.getenv('GSC_CLIENT_SECRET_FILE', 'client_secret.json')
 GSC_PROPERTY_URL = os.getenv('GSC_PROPERTY_URL')
 MIN_IMPRESSIONS = 5
 
 def authenticate_gsc():
-    if not GSC_CREDENTIALS_FILE or not os.path.exists(GSC_CREDENTIALS_FILE):
-        print(f"Error: GSC credentials file '{GSC_CREDENTIALS_FILE}' not found.")
-        return None
+    scopes = ['https://www.googleapis.com/auth/webmasters.readonly']
+    creds = None
+    
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first time.
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', scopes)
         
-    credentials = service_account.Credentials.from_service_account_file(
-        GSC_CREDENTIALS_FILE,
-        scopes=['https://www.googleapis.com/auth/webmasters.readonly']
-    )
-    return build('searchconsole', 'v1', credentials=credentials)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not os.path.exists(GSC_CLIENT_SECRET_FILE):
+                print(f"Error: Client secret file '{GSC_CLIENT_SECRET_FILE}' not found.")
+                print("Please download it from the Google Cloud Console (OAuth 2.0 Client IDs -> Desktop App).")
+                return None
+                
+            flow = InstalledAppFlow.from_client_secrets_file(
+                GSC_CLIENT_SECRET_FILE, scopes)
+            creds = flow.run_local_server(port=0)
+            
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+            
+    return build('searchconsole', 'v1', credentials=creds)
 
 def fetch_gsc_data(service, date_str):
     print(f"Fetching GSC data for {GSC_PROPERTY_URL} on {date_str}...")
