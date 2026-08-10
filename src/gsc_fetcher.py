@@ -6,6 +6,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import sqlite3
+import config
 from db import get_connection
 
 load_dotenv()
@@ -13,7 +14,6 @@ load_dotenv()
 # Configuration
 GSC_CLIENT_SECRET_FILE = os.getenv('GSC_CLIENT_SECRET_FILE', 'client_secret.json')
 GSC_PROPERTY_URL = os.getenv('GSC_PROPERTY_URL')
-MIN_IMPRESSIONS = 5
 
 def authenticate_gsc():
     scopes = ['https://www.googleapis.com/auth/webmasters.readonly']
@@ -68,7 +68,7 @@ def upsert_to_db(rows, date_str):
     count = 0
     for row in rows:
         impressions = row.get('impressions', 0)
-        if impressions < MIN_IMPRESSIONS:
+        if impressions < config.MIN_IMPRESSIONS:
             continue
             
         keys = row.get('keys', [])
@@ -97,8 +97,8 @@ def main():
     if not service:
         return
         
-    # GSC data usually has a 3 day lag
-    target_date = datetime.date.today() - datetime.timedelta(days=3)
+    # GSC data usually has a lag
+    target_date = datetime.date.today() - datetime.timedelta(days=config.GSC_DATA_LAG_DAYS)
     date_str = target_date.strftime('%Y-%m-%d')
     
     rows = fetch_gsc_data(service, date_str)

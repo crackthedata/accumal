@@ -5,6 +5,7 @@ import json
 import datetime
 import sqlite3
 from dotenv import load_dotenv
+import config
 from db import get_connection
 
 load_dotenv()
@@ -16,13 +17,13 @@ def get_striking_distance_keywords():
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Get keywords where the position is between 7 and 15, prioritize by impressions
-    cursor.execute("""
+    # Get keywords within striking distance, prioritize by impressions
+    cursor.execute(f"""
     SELECT query FROM keyword_rankings 
-    WHERE position BETWEEN 7 AND 15
+    WHERE position BETWEEN {config.STRIKING_DISTANCE_MIN_POS} AND {config.STRIKING_DISTANCE_MAX_POS}
     GROUP BY query
     ORDER BY SUM(impressions) DESC
-    LIMIT 20
+    LIMIT {config.MAX_KEYWORDS_TO_ANALYZE}
     """)
     keywords = [row[0] for row in cursor.fetchall()]
     conn.close()

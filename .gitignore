@@ -222,3 +222,6 @@ __marimo__/
 *-credentials.json
 service-account-credentials.json
 client_secret.json
+token.json
+seo_ranking.db
+exports/

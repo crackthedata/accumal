@@ -37,6 +37,19 @@ This project builds an automated, local SEO ranking database. It pulls your rank
 
    *For Mac/Linux, use `python3 -m venv venv` and `source venv/bin/activate`.*
 
+## Configuration
+
+The pipeline's numeric thresholds and analysis parameters are centralized in `src/config.py`. You can adjust these values to suit your data volume and SEO strategy:
+
+- `MIN_IMPRESSIONS`: Minimum daily impressions for a keyword to be saved (default: `1`).
+- `GSC_DATA_LAG_DAYS`: The number of days ago to fetch GSC data for, accounting for Google's data delay (default: `3`).
+- `STRIKING_DISTANCE_MIN_POS`: Highest ranking position for striking distance analysis (default: `2`).
+- `STRIKING_DISTANCE_MAX_POS`: Lowest ranking position for striking distance analysis (default: `60`).
+- `MAX_KEYWORDS_TO_ANALYZE`: Max keywords to send to the SERP API (default: `20`).
+- `EXPORT_LOOKBACK_DAYS`: Days to look back in the database for CSV exports (default: `7`).
+- `CTR_RESCUE_MAX_POS`: Max position to be considered for CTR rescue (default: `3`).
+- `CTR_RESCUE_MIN_CTR`: CTR threshold below which a top-ranking keyword is flagged (default: `0.08`).
+
 ## Running the Pipeline
 
 Once your environment is set up and activated, you can run the entire data extraction and analysis pipeline.

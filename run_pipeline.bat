@@ -1,6 +1,7 @@
 @echo off
 REM SEO Ranking Database Pipeline
 
+call .\venv\Scripts\activate
 echo Starting SEO Ranking Database Pipeline...
 
 REM 1. Initialize DB (creates tables if they don't exist)

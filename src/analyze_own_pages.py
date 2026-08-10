@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import json
 import datetime
 import sqlite3
+import config
 from db import get_connection
 
 def get_own_pages_to_scrape():
@@ -12,9 +13,9 @@ def get_own_pages_to_scrape():
     cursor = conn.cursor()
     
     # We'll scrape our own pages that appear in striking distance keywords
-    cursor.execute("""
+    cursor.execute(f"""
     SELECT DISTINCT page FROM keyword_rankings 
-    WHERE position BETWEEN 7 AND 15
+    WHERE position BETWEEN {config.STRIKING_DISTANCE_MIN_POS} AND {config.STRIKING_DISTANCE_MAX_POS}
     """)
     pages = [row[0] for row in cursor.fetchall()]
     conn.close()

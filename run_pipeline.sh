@@ -1,6 +1,7 @@
 #!/bin/bash
 # SEO Ranking Database Pipeline
 
+source venv/bin/activate
 echo "Starting SEO Ranking Database Pipeline..."
 
 # 1. Initialize DB (creates tables if they don't exist)

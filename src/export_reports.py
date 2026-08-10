@@ -2,6 +2,7 @@ import sqlite3
 import csv
 import os
 from dotenv import load_dotenv
+import config
 from db import get_connection
 
 load_dotenv()
@@ -36,21 +37,21 @@ def export_query_to_csv(query, filename, description):
 def main():
     ensure_export_dir()
     
-    striking_distance_query = """
+    striking_distance_query = f"""
     SELECT query, page, SUM(impressions) as total_impressions, AVG(position) as avg_position 
     FROM keyword_rankings 
-    WHERE date >= DATE('now', '-3 days') 
-      AND position BETWEEN 7 AND 15 
+    WHERE date >= DATE('now', '-{config.EXPORT_LOOKBACK_DAYS} days') 
+      AND position BETWEEN {config.STRIKING_DISTANCE_MIN_POS} AND {config.STRIKING_DISTANCE_MAX_POS} 
     GROUP BY query, page
     ORDER BY total_impressions DESC;
     """
     
-    ctr_rescue_query = """
+    ctr_rescue_query = f"""
     SELECT query, page, AVG(ctr) as avg_ctr, AVG(position) as avg_position 
     FROM keyword_rankings 
-    WHERE position <= 3 
+    WHERE position <= {config.CTR_RESCUE_MAX_POS} 
     GROUP BY query, page
-    HAVING avg_ctr < 0.08
+    HAVING avg_ctr < {config.CTR_RESCUE_MIN_CTR}
     ORDER BY avg_ctr ASC;
     """
     
@@ -76,7 +77,7 @@ def main():
     FROM keyword_rankings gsc
     JOIN competitor_analysis comp ON gsc.query = comp.target_keyword
     LEFT JOIN my_page_data my_page ON gsc.page = my_page.page
-    WHERE gsc.date >= DATE('now', '-3 days')
+    WHERE gsc.date >= DATE('now', '-{config.EXPORT_LOOKBACK_DAYS} days')
       AND comp.rank_position < gsc.position
     GROUP BY gsc.query, comp.competitor_url, my_page.word_count
     ORDER BY my_position ASC;
