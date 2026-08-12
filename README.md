@@ -68,7 +68,19 @@ chmod +x run_pipeline.sh
 **Via Docker:**
 You can also run the pipeline as a background cron job using Docker. 
 1. Build the image: `docker build -t accumal .`
-2. Run the container: `docker run -d --name accumal-cron accumal`
+2. Create the database file and exports folder on your host machine first (so Docker doesn't mistakenly create the database as a directory):
+   ```bash
+   touch seo_ranking.db
+   mkdir -p exports
+   ```
+3. Run the container with volume mounts to persist your data locally:
+   ```bash
+   docker run -d \
+     --name accumal-cron \
+     -v $(pwd)/seo_ranking.db:/app/seo_ranking.db \
+     -v $(pwd)/exports:/app/exports \
+     accumal
+   ```
 
 *Note on Docker Logging*: The `Dockerfile` has been configured to properly redirect the output of all Python scripts to the container logs. If you need to troubleshoot the pipeline, you can view the complete execution logs by running:
 ```bash
