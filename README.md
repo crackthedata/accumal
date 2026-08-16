@@ -12,6 +12,7 @@ This project builds an automated, local SEO ranking database. It pulls your rank
    - Download the JSON file and save it locally (e.g., as `client_secret.json`).
 3. A free API key from [Serper.dev](https://serper.dev/).
 4. A free API key from [Open PageRank](https://www.domcop.com/openpagerank/what-is-openpagerank).
+5. An API key from [DataForSEO](https://dataforseo.com/) to fetch search volume and keyword difficulty data.
 
 ## Setup Instructions
 
@@ -20,6 +21,7 @@ This project builds an automated, local SEO ranking database. It pulls your rank
    - `GSC_PROPERTY_URL`: Your exact website URL as registered in GSC (e.g., `https://example.com/` or `sc-domain:example.com`).
    - `SERPER_API_KEY`: Your Serper API key.
    - `OPEN_PAGERANK_API_KEY`: Your Open PageRank API key.
+   - `DATAFORSEO_AUTH_BASIC`: Your DataForSEO API key encoded in Base64 (Basic Auth format).
    - `MY_DOMAIN_AUTHORITY`: Your own website's domain authority score (e.g., `3.1`). *(Optional: Defaults to 0 if omitted, but helps complete the final gap analysis matrix).*
 
 2. **Virtual Environment Setup (Windows)**:
@@ -91,7 +93,13 @@ docker logs accumal-cron
 ## Outputs
 
 The pipeline will generate SQLite database records (`seo_ranking.db`) and export the following CSV reports into the `exports/` folder:
-1. `1_striking_distance.csv` - Keywords ranking in positions 7-15.
+1. `1_striking_distance.csv` - Keywords ranking in positions 7-15, now including Search Volume and KD.
 2. `2_ctr_rescue.csv` - Top 3 keywords with poor click-through rates.
 3. `3_cannibalization.csv` - Keywords where multiple pages are competing.
-4. `4_content_gap.csv` - The Ultimate Diagnostic Matrix comparing your word counts and domain authority against competitors outranking you.
+4. `4_content_gap.csv` - The Ultimate Diagnostic Matrix comparing your word counts, keyword presence in H1/Title, and domain authority against competitors outranking you.
+5. `5_featured_snippet_opportunities.csv` - Keywords where you rank in top 5 and a featured snippet exists.
+6. `6_rank_drops_alert.csv` - Keywords that have dropped by more than 2 positions over your lookback window.
+7. `7_competitor_share_of_voice.csv` - Which competitors appear most frequently in the top 3 spots across your keywords.
+8. `8_zero_click_high_impression.csv` - Keywords with high impressions (>50) but 0 clicks.
+9. `9_easy_wins_matrix.csv` - Keywords where your DA is higher than the competitor AND you have less word count, making them low-hanging fruit to outrank.
+

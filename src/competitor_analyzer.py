@@ -32,7 +32,7 @@ def get_striking_distance_keywords():
 def fetch_serper_results(query):
     if not SERPER_API_KEY:
         print("Error: SERPER_API_KEY is not set.")
-        return []
+        return [], {}
         
     url = "https://google.serper.dev/search"
     payload = json.dumps({"q": query})
@@ -46,6 +46,18 @@ def fetch_serper_results(query):
         response.raise_for_status()
         data = response.json()
         
+        # Parse SERP Features
+        has_featured_snippet = bool(data.get('answerBox'))
+        featured_snippet_url = data.get('answerBox', {}).get('link') if has_featured_snippet else None
+        has_local_pack = bool(data.get('places'))
+        has_paa = bool(data.get('peopleAlsoAsk'))
+        
+        serp_features = {
+            'featured_snippet_url': featured_snippet_url,
+            'has_local_pack': has_local_pack,
+            'has_paa': has_paa
+        }
+        
         # Get top 3 organic results
         results = []
         for item in data.get('organic', [])[:3]:
@@ -54,12 +66,29 @@ def fetch_serper_results(query):
                 'title': item.get('title'),
                 'position': item.get('position')
             })
-        return results
+        return results, serp_features
     except Exception as e:
         print(f"Error fetching SERP for query '{query}': {e}")
-        return []
+        return [], {}
 
-def scrape_page_details(url):
+def upsert_serp_features(date_str, query, serp_features):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+    INSERT OR REPLACE INTO keyword_serp_features
+    (date, query, featured_snippet_url, has_local_pack, has_paa)
+    VALUES (?, ?, ?, ?, ?)
+    ''', (
+        date_str, 
+        query, 
+        serp_features.get('featured_snippet_url'), 
+        serp_features.get('has_local_pack'), 
+        serp_features.get('has_paa')
+    ))
+    conn.commit()
+    conn.close()
+
+def scrape_page_details(url, target_keyword):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
     }
@@ -75,31 +104,40 @@ def scrape_page_details(url):
             
         text = soup.get_text(separator=' ')
         word_count = len(text.split())
+        image_count = len(soup.find_all('img'))
         
+        target_kw_lower = target_keyword.lower()
+        title_text = soup.title.string if soup.title and soup.title.string else ""
+        title_has_keyword = target_kw_lower in title_text.lower()
+        
+        h1_has_keyword = False
         headings = {}
         for tag in ['h1', 'h2', 'h3']:
             elements = soup.find_all(tag)
             if elements:
-                headings[tag] = [el.get_text(strip=True) for el in elements]
+                tag_texts = [el.get_text(strip=True) for el in elements]
+                headings[tag] = tag_texts
+                if tag == 'h1' and any(target_kw_lower in h.lower() for h in tag_texts):
+                    h1_has_keyword = True
                 
-        return word_count, json.dumps(headings)
+        return word_count, json.dumps(headings), title_has_keyword, h1_has_keyword, image_count
     except Exception as e:
         print(f"Error scraping {url}: {e}")
-        return None, None
+        return None, None, False, False, 0
 
-def upsert_competitor_data(date_str, target_keyword, competitor_url, rank_position, title, word_count, headings_outline):
+def upsert_competitor_data(date_str, target_keyword, competitor_url, rank_position, title, word_count, headings_outline, title_has_kw, h1_has_kw, image_count):
     conn = get_connection()
     cursor = conn.cursor()
     
     cursor.execute('''
     INSERT OR REPLACE INTO competitor_analysis 
-    (date, target_keyword, competitor_url, rank_position, title, word_count, headings_outline, domain_authority, referring_domains)
+    (date, target_keyword, competitor_url, rank_position, title, word_count, headings_outline, title_has_keyword, h1_has_keyword, image_count, domain_authority, referring_domains)
     VALUES (
-        ?, ?, ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         (SELECT domain_authority FROM competitor_analysis WHERE competitor_url = ? LIMIT 1),
         (SELECT referring_domains FROM competitor_analysis WHERE competitor_url = ? LIMIT 1)
     )
-    ''', (date_str, target_keyword, competitor_url, rank_position, title, word_count, headings_outline, competitor_url, competitor_url))
+    ''', (date_str, target_keyword, competitor_url, rank_position, title, word_count, headings_outline, title_has_kw, h1_has_kw, image_count, competitor_url, competitor_url))
     
     conn.commit()
     conn.close()
@@ -116,7 +154,9 @@ def main():
     
     for query in keywords:
         print(f"Processing keyword: {query}")
-        results = fetch_serper_results(query)
+        results, serp_features = fetch_serper_results(query)
+        if serp_features:
+            upsert_serp_features(date_str, query, serp_features)
         
         for res in results:
             url = res['url']
@@ -124,9 +164,9 @@ def main():
             position = res['position']
             print(f"  -> Scraping competitor (Pos {position}): {url}")
             
-            word_count, headings = scrape_page_details(url)
+            word_count, headings, title_has_kw, h1_has_kw, image_count = scrape_page_details(url, query)
             if word_count is not None:
-                upsert_competitor_data(date_str, query, url, position, title, word_count, headings)
+                upsert_competitor_data(date_str, query, url, position, title, word_count, headings, title_has_kw, h1_has_kw, image_count)
 
 if __name__ == '__main__':
     main()
