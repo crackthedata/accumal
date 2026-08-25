@@ -75,12 +75,25 @@ You can also run the pipeline as a background cron job using Docker.
    touch seo_ranking.db
    mkdir -p exports
    ```
-3. Run the container with volume mounts to persist your data locally:
+3. **Important**: Because the Docker container runs as a background cron job, you must authenticate with Google manually the **first time** to generate a `token.json` file. Run a temporary interactive container:
+   ```bash
+   docker run --name accumal-login --rm -it -p 8080:8080 -v $(pwd):/app accumal bash
+   ```
+   Inside the container, run `python src/gsc_fetcher.py`. It will print a Google authentication URL. 
+   Open that URL in your local browser, log in, and you will be redirected to an error page starting with `http://localhost:8080/`. Copy that entire URL.
+   Open a *second* terminal and run this command to complete the login:
+   ```bash
+   docker exec -it accumal-login python -c "import urllib.request; urllib.request.urlopen('PASTE_YOUR_COPIED_URL_HERE')"
+   ```
+   The first terminal will finish and save `token.json` to your directory. Type `exit` to close the temporary container.
+4. Run the cron container with volume mounts to persist your data locally, and importantly, mount your `token.json` and `client_secret.json`:
    ```bash
    docker run -d \
      --name accumal-cron \
      -v $(pwd)/seo_ranking.db:/app/seo_ranking.db \
      -v $(pwd)/exports:/app/exports \
+     -v $(pwd)/token.json:/app/token.json \
+     -v $(pwd)/client_secret.json:/app/client_secret.json \
      accumal
    ```
 
