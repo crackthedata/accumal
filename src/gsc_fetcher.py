@@ -36,7 +36,7 @@ def authenticate_gsc():
                 
             flow = InstalledAppFlow.from_client_secrets_file(
                 GSC_CLIENT_SECRET_FILE, scopes)
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_local_server(port=8080, open_browser=False)
             
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
