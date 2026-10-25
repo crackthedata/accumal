@@ -1,0 +1,9 @@
+.git
+.gitignore
+venv
+__pycache__
+.pytest_cache
+seo_ranking.db
+*.pyc
+*.pyo
+.env.example

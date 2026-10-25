@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# SEO Database files
+*.sqlite3
+*-credentials.json
+service-account-credentials.json
+client_secret.json
+token.json
+seo_ranking.db
+exports/
